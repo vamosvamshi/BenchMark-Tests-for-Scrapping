@@ -1,0 +1,7 @@
+StartDate = 10/12/2010
+end date = 10/12/2017
+ticker name = MSFT
+amazon ASIN = B00YD5400Y
+ebay itemnumber = 1742276670
+bestbuy productid = 6080503
+run = amazon
