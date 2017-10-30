@@ -12,97 +12,100 @@ startdate = "06/12/2016"
 enddate = "10/12/2017"
 ticker = 'GE'
 '''
-file = open("E:/Graduate Project/finance data/input.txt")
-lines = file.readlines()
-file.close()
-#initialize the month date and year of the starting and ending date = 0
-y1 = 0
-m1 = 0
-d1 = 0
-y2 = 0
-m2 = 0
-d2 = 0
 
-for line in lines:
-    #converts the whole line into lower and strips off the extra space at the ends
-    line = line.lower().strip()
-    if (re.findall(r'\w+tart',line)):
-        start_date_match = re.findall(r'\d{2}/\d{2}/\d{4}',line)
-        start = re.split('/|-|\|:',start_date_match[0])
-    elif (re.findall(r'\w+nd',line)):
-        end_date_match = re.findall(r'\d{2}/\d{2}/\d{4}',line)
-        end = re.split('/|-|\|:',end_date_match[0])
-    elif (re.findall(r'\w+icker',line)):
-        ticker = re.split('/|-|\|:|=',line)
+def main():
+    file = open("E:/Graduate Project/finance data/input.txt")
+    lines = file.readlines()
+    file.close()
+    #initialize the month date and year of the starting and ending date = 0
+    y1 = 0
+    m1 = 0
+    d1 = 0
+    y2 = 0
+    m2 = 0
+    d2 = 0
 
-#sets the end and start dates from the text file to the values that would be used in the string and convert them to a string
-m1 = str(start[0])
-d1 = str(start[1])
-y1 = str(start[2])
+    for line in lines:
+        #converts the whole line into lower and strips off the extra space at the ends
+        line = line.lower().strip()
+        if (re.findall(r'\w+tart',line)):
+            start_date_match = re.findall(r'\d{2}/\d{2}/\d{4}',line)
+            start = re.split('/|-|\|:',start_date_match[0])
+        elif (re.findall(r'\w+nd',line)):
+            end_date_match = re.findall(r'\d{2}/\d{2}/\d{4}',line)
+            end = re.split('/|-|\|:',end_date_match[0])
+        elif (re.findall(r'\w+icker',line)):
+            ticker = re.split('/|-|\|:|=',line)
 
-m2 = str(end[0])
-d2 = str(end[1])
-y2 = str(end[2])
-#set the ticker value from the text file, strip and make everything into uppercase
-ticker = ticker[1].upper().strip()
+    #sets the end and start dates from the text file to the values that would be used in the string and convert them to a string
+    m1 = str(start[0])
+    d1 = str(start[1])
+    y1 = str(start[2])
 
-startdate = str(m1+"/"+d1+"/"+y1)
-enddate = str(m2+"/"+d2+"/"+y2)
+    m2 = str(end[0])
+    d2 = str(end[1])
+    y2 = str(end[2])
+    #set the ticker value from the text file, strip and make everything into uppercase
+    ticker = ticker[1].upper().strip()
 
-print (" start date is %s and type is %s " %(startdate,type(startdate)))
-print ("end date is %s and type is %s "%(enddate,type(enddate)))
-print("ticker is %s and type is %s" %(ticker,type(ticker)))
+    startdate = str(m1+"/"+d1+"/"+y1)
+    enddate = str(m2+"/"+d2+"/"+y2)
 
-timestamp_startdate = int(time.mktime(datetime.datetime.strptime(startdate, "%m/%d/%Y").timetuple()))
-timestamp_enddate = int(time.mktime(datetime.datetime.strptime(enddate, "%m/%d/%Y").timetuple()))
-timestamp_difference = int(timestamp_enddate) - int(timestamp_startdate)
-actual_end = (timestamp_enddate)
-actual_start = (timestamp_startdate)
+    print (" start date is %s and type is %s " %(startdate,type(startdate)))
+    print ("end date is %s and type is %s "%(enddate,type(enddate)))
+    print("ticker is %s and type is %s" %(ticker,type(ticker)))
 
-print("start time is ",int(timestamp_startdate))
-print("end time is ",int(timestamp_enddate))
-print("difference in timestamp is ",((timestamp_enddate)-(timestamp_startdate)))
+    timestamp_startdate = int(time.mktime(datetime.datetime.strptime(startdate, "%m/%d/%Y").timetuple()))
+    timestamp_enddate = int(time.mktime(datetime.datetime.strptime(enddate, "%m/%d/%Y").timetuple()))
+    timestamp_difference = int(timestamp_enddate) - int(timestamp_startdate)
+    actual_end = (timestamp_enddate)
+    actual_start = (timestamp_startdate)
 
-step = int(10540800)
-table_complete = []
-for i in range (actual_start,actual_end,step):
+    print("start time is ",int(timestamp_startdate))
+    print("end time is ",int(timestamp_enddate))
+    print("difference in timestamp is ",((timestamp_enddate)-(timestamp_startdate)))
 
-    timestamp_startdate = timestamp_enddate - 10540800
-    if (timestamp_startdate <= actual_start):
-        timestamp_startdate = actual_start
-    url_yahoo = "https://finance.yahoo.com/quote/"+ticker+"/history?period1="+str(
-        timestamp_startdate)+"&period2="+str(timestamp_enddate)+"&interval=1d&filter=history&frequency=1d"
-    print (url_yahoo)
+    step = int(10540800)
+    table_complete = []
+    for i in range (actual_start,actual_end,step):
 
-    url1 =urllib.request.urlopen(url_yahoo).read()
+        timestamp_startdate = timestamp_enddate - 10540800
+        if (timestamp_startdate <= actual_start):
+            timestamp_startdate = actual_start
+        url_yahoo = "https://finance.yahoo.com/quote/"+ticker+"/history?period1="+str(
+            timestamp_startdate)+"&period2="+str(timestamp_enddate)+"&interval=1d&filter=history&frequency=1d"
+        print (url_yahoo)
 
-    soup = bs.BeautifulSoup(url1,'html.parser')
+        url1 =urllib.request.urlopen(url_yahoo).read()
 
-    table = soup.find_all('tr')
-    #append into table_complete the values after each iteration.
-    table_complete.append(table)
+        soup = bs.BeautifulSoup(url1,'html.parser')
 
-    timestamp_enddate = timestamp_startdate - 86400
+        table = soup.find_all('tr')
+        #append into table_complete the values after each iteration.
+        table_complete.append(table)
 
-#opening the excel sheet to write the data into
-workbook = xlsxwriter.Workbook('E:/Graduate Project/finance data/yahoo_data.xlsx')
-worksheet = workbook.add_worksheet()
-#initializing values to set the cell numbers
-i=0
-j=0
+        timestamp_enddate = timestamp_startdate - 86400
 
-for x in table_complete:
-    for y in x:
-        for z in y:
-            worksheet.write(j,i,z.text)
-            print (z.text,end=",,")
-            i=i+1
-        i=0
-        print("\n")
-        j=j+1
+    #opening the excel sheet to write the data into
+    workbook = xlsxwriter.Workbook('E:/Graduate Project/finance data/yahoo_data.xlsx')
+    worksheet = workbook.add_worksheet()
+    #initializing values to set the cell numbers
+    i=0
+    j=0
 
-workbook.close()
+    for x in table_complete:
+        for y in x:
+            for z in y:
+                worksheet.write(j,i,z.text)
+                print (z.text,end=",,")
+                i=i+1
+            i=0
+            print("\n")
+            j=j+1
+
+    workbook.close()
 
 
-
+if __name__ == "__main__":
+    main()
 
