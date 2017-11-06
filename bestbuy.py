@@ -21,8 +21,9 @@ def main():
     print(product_no[-1])
 
     product_id = product_no[-1].strip()
-
-    url = "https://www.bestbuy.com/site/reviews/s/"+str(product_id)+"?page=2&sort=MOST_HELPFUL"
+    url = "https://www.bestbuy.com/site/reviews/s/"+product_id
+    #url = "https://www.bestbuy.com/site/reviews/s/"+str(product_id)+"?page=2&sort=MOST_HELPFUL"
+    print(url)
 
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.71 Safari/537.36'}
     a = requests.get(url, headers=headers)
@@ -36,7 +37,7 @@ def main():
         print(item.text)
 
 
-    print("items in page_number are ",page_number)
+    print("items in page_number are ",page_number[:])
     split_message = page_number[0].split(" ")
     print("the number of reviews are ",split_message[-3])
     last_page=(int(split_message[-3]))
