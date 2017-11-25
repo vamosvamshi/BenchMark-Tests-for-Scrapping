@@ -1,9 +1,14 @@
 import bs4 as bs
-import pickle
-import requests
+import datetime
 import urllib.request
 import xlsxwriter
+import time
+#from tkinter import *
+import math
+import multiprocessing
+#import tkinter
 import re
+import glob
 
 def main():
     file = open("E:/Graduate Project/finance data/input.txt")
@@ -36,70 +41,85 @@ def main():
     d1 = str(start[0])
     m1 = str(start[1])
     y1 = str(start[2])
+    start_date = ("{}/{}/{}".format(d1, m1, y1))
+    print("start date is {}".format(start_date))
 
     d2 = str(end[0])
     m2 = str(end[1])
     y2 = str(end[2])
+    end_date = ("{}/{}/{}".format(d2, m2, y2))
+    print("end date is {}".format(end_date))
     '''set the ticker value from the text file'''
     ticker = ticker[1].upper().strip()
 
+    start_timestamp = time.mktime(datetime.datetime.strptime(start_date, "%d/%m/%Y").timetuple())
+    end_timestamp = time.mktime(datetime.datetime.strptime(end_date, "%d/%m/%Y").timetuple())
+
+    days = (end_timestamp - start_timestamp) / 86400
+    effective_days = days * (5 / 7)
+    pages = effective_days / 200
+    print("timestamp difference {} days is {} and effective days is {} pages is{}".format((
+        end_timestamp - start_timestamp), days, effective_days, math.ceil(pages)))
+
+    no_of_pages = math.ceil(pages)
+
     list_count = 0
-    split_nn_list = []
-    xList = []
+
     month = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
-    for page_count in range(0,8100,200):
+    pool_input_list = []
+    pool_input_tuple = ()
+    for i in range(no_of_pages):
+        url_page = "https://finance.google.com/finance/historical?q=NASDAQ:"+ticker+"&startdate="+month[int(
+             m1)-1]+"+"+d1+"%2C+"+y1+"&enddate="+month[int(
+                m2)-1]+"+"+d2+"%2C+"+y2+"&num=200&ei=HV3FWauPPIi_jAHlsozoAQ&start="+str(i*200)
+        pool_input_list.append([[i, url_page]])
+        pool_input_tuple = tuple(pool_input_list)
+    print(pool_input_tuple)
 
-        url1 = "https://finance.google.com/finance/historical?q=NASDAQ:"+ticker+"&startdate="+month[int(
-         m1)-1]+"+"+d1+"%2C+"+y1+"&enddate="+month[int(
-            m2)-1]+"+"+d2+"%2C+"+y2+"&num=200&ei=HV3FWauPPIi_jAHlsozoAQ&start="+str(page_count)
 
-        #url1 = "https://finance.google.com/finance/historical?q=NASDAQ:MSFT&startdate=Feb+06%2C+2015&enddate=Jan+12%2C
-        # +2017&num=200&ei=HV3FWauPPIi_jAHlsozoAQ&start=1"
-        print(url1)
+    p = multiprocessing.Pool(processes=4)
+    p.map(ParsingPage, pool_input_tuple)
+        #print("total time taken in multiprocessing pool is " + str(time.time() - t1))
+    rd = glob.glob("E:/Graduate Project/finance data/Google Data*.txt")
+    with open("E:/Graduate Project/finance data/Google Data combined.txt", "wb") as outfile:
+        for f in rd:
+            with open(f, "rb") as infille:
+                outfile.write(infille.read())
 
-        #print('a is',https://finance.google.com/finance/historical?q=NASDAQ:"+ticker.+"&startdate="+month[int(
-        # m1)+1]+"+"+d1+"%2C+"+y1+"&enddate="+month[int(m2)+1]+"+"+d2+"%2C+"+y2+"&num=200&ei=HV3FWauPPIi_jAHlsozoAQ&start="+str(page_count))
+
+def ParsingPage(poolinput):
+    split_nn_list = []
+    xlist = []
+    for i in range(len(poolinput)):
+
+        url1 = poolinput[i][1]
         a = urllib.request.urlopen(url1).read()
+        soup = bs.BeautifulSoup(a, 'html.parser')
 
-        soup = bs.BeautifulSoup(a,'html.parser')
-
-        table = soup.find_all('table',{'class':'gf-table historical_price'})
+        table = soup.find_all('table', {'class': 'gf-table historical_price'})
         '''xList filters the data from the website and appends it in the form of a string'''
         for x in table:
-            xList.append(x.text)
-        print("page "+str(page_count/200)+" done")
+            xlist.append(x.text)
         '''split_nn_list will hold the total array of data particular to each day, splitting on \n\n'''
-        try:
-            split_nn_list.append(xList[int(page_count/200)].split('\n\n'))
-        except:
-            pass
+    try:
+        for l in xlist:
+            split_nn_list.append(l.split('\n\n'))
+    except:
+        pass
 
-    '''this is to print all whole list of values for all the pages info gathered'''
-    #print('split_nn_list is \n',split_nn_list)
+    file = open("E:/Graduate Project/finance data/Google Data" + str(poolinput[i][0]).strip() + ".txt", "w+")
+    print("page "+str(poolinput[i][0])+" done")
+    for e in split_nn_list:
+        for f in e:
+            print(f.replace("\n", "\t"))
+            try:
+                file.write(f.replace("\n", "\t")+"\n")
+            except:
+                pass
 
-    workbook = xlsxwriter.Workbook('E:/Graduate Project/finance data/demo.xlsx')
-    worksheet = workbook.add_worksheet()
-    '''
-    for a in ((split_nn_list)):
-        for b in a:
-            print(b.replace("\n","\t"))
-        print('\n')
-            #print(indiv_list[b].replace("\n","\t"))
-    '''
-    '''j = 1 for incrementing the counter for writing the data into rows of excel'''
-    j=1
-    for a in split_nn_list:
-        for b in a:
-            row_string = 'A' + str(j)
-            '''indiv_list is the single row element consisting of all the data required to be put in the row'''
-            indiv_list = b.split('\n')
-            worksheet.write_row(row_string,indiv_list)
-            j = j+1
-        '''reinitializing the row_string to be zero after each iteration '''
-        row_string = ''
+    file.close()
 
-    workbook.close()
 
 
 if __name__ == "__main__":
