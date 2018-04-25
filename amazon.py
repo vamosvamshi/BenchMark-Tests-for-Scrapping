@@ -5,6 +5,7 @@ from time import sleep
 import multiprocessing
 import glob
 from tkinter import *
+import os
 
 def main():
     file = open("E:/Graduate Project/finance data/input.txt")
@@ -28,13 +29,16 @@ def main():
                                                              "=cm_cr_arp_d_paging_btm_2?ie=UTF8&reviewerType=all_reviews"
 
     print(url2)
+
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.71 Safari/537.36'}
     a = requests.get(url2, headers=headers)
 
-    soup = BeautifulSoup(a.content, "lxml")
+    #soup = BeautifulSoup(a.content, "lxml")
+    soup = BeautifulSoup(a.content, "html.parser")
     table1 = soup.find_all("li", {"class": "page-button"})
 
+    print("hi")
     page = []
     # this is for printing the page numbers
     for item in table1:
@@ -57,13 +61,13 @@ def main():
     p = multiprocessing.Pool(processes=4)
     p.map(ParsingPage, pool_input_tuple)
 
-    rd = glob.glob("E:/Graduate Project/finance data/Amazon Comments*.txt")
-    with open("E:/Graduate Project/finance data/Amazon Comments combined.txt", "wb") as outfile:
+    rd = glob.glob("C:/Users/vamshi/Desktop/DATA_EXTRACTION/amazon/"+str(ASIN)+"/*.txt")
+    with open("C:/Users/vamshi/Desktop/DATA_EXTRACTION/amazon/"+str(ASIN)+"/Amazon Comments combined.txt", "wb") as outfile:
         for f in rd:
             with open(f, "rb") as infille:
                 outfile.write(infille.read())
 
-    file = open("E:/Graduate Project/finance data/Amazon Comments combined.txt")
+    file = open("C:/Users/vamshi/Desktop/DATA_EXTRACTION/amazon/"+str(ASIN)+"/Amazon Comments combined.txt")
     lines = file.readlines()
     file.close()
 
@@ -78,16 +82,22 @@ def main():
     root.mainloop()
 
 def ParsingPage(pool_input):
+    k = re.findall("[A-Z0-9]+", pool_input[0][1])
+    print("k is ")
+    print (k)
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.71 Safari/537.36'}
 
     for i in range(len(pool_input)):
-        f = open("E:/Graduate Project/finance data/Amazon Comments.txt" + str(pool_input[i][0]).strip() + ".txt", "w+")
-
+        #f = open("E:/Graduate Project/finance data/Amazon Comments.txt" + str(pool_input[i][0]).strip() + ".txt", "w+")
+        if not os.path.exists("C:/Users/vamshi/Desktop/DATA_EXTRACTION/amazon/" + k[0]):
+            os.makedirs("C:/Users/vamshi/Desktop/DATA_EXTRACTION/amazon/" + k[0] + "/")
+        f = open("C:/Users/vamshi/Desktop/DATA_EXTRACTION/amazon/"+str(k[0])+"/" + str(pool_input[i][0]).strip()+".txt","w+")
         print(pool_input[i][1])
         url=pool_input[i][1]
         a = requests.get(url, headers=headers)
-        soup = BeautifulSoup(a.content, "lxml")
+        #soup = BeautifulSoup(a.content, "lxml")
+        soup = BeautifulSoup(a.content, "html.parser")
         table2 = soup.find_all("span", {"class": "review-text"})
         print("process " + str(pool_input[i][0]) + " done")
         # this is for printing the commments and writing the lines to the file.

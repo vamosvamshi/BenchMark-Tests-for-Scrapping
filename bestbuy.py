@@ -30,20 +30,21 @@ def main():
         'User-Agent': 'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.71 Safari/537.36'}
     a = requests.get(url, headers=headers)
 
-    soup = BeautifulSoup(a.content, "lxml")
+    soup = BeautifulSoup(a.content, "html.parser")
 
     page_number = []
-    table1 = soup.find_all("span", {"class": "message-text "})
+    table1 = soup.find_all("span",{"class":"message-text"})
     for item in table1:
         page_number.append(item.text)
         print(item.text)
 
-    print("items in page_number are ", page_number[:])
+    print("items in page_number are ",page_number[:])
     split_message = page_number[0].split(" ")
-    print("the number of reviews are ", split_message[-3])
-    last_page = (int(split_message[-3]))
-    last_page = (last_page / 20) + 1
-    print("last page is ", last_page)
+    print("the number of reviews are ",split_message[-2].replace(",",""))
+    last_page = int(split_message[-2].replace(",",""))
+    last_page=(last_page/20)+1
+    print("last page is ",last_page)
+
 
     pool_input_list = []
     pool_input_tuple = ()
@@ -84,7 +85,7 @@ def ParsingPage(pool_input1):
         f = open("E:/Graduate Project/finance data/BestBuy Comments" + str(pool_input1[i][0]).strip() + ".txt", "w+")
         #url1 = "https://www.bestbuy.com/site/reviews/s/" + str(product_id) + "?page=" + str(i) + "&sort=MOST_HELPFUL"
         a = requests.get(pool_input1[i][1], headers=headers)
-        soup = BeautifulSoup(a.content, "lxml")
+        soup = BeautifulSoup(a.content, "html.parser")
         table2 = soup.find_all("p", {"class": "pre-white-space"})
         print("process " + str(pool_input1[i][0]) + " done")
         for item in table2:
@@ -94,9 +95,6 @@ def ParsingPage(pool_input1):
             except:
                 pass
     f.close()
-
-
-
 
 if __name__ == "__main__":
     main()

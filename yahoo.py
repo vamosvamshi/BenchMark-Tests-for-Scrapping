@@ -6,6 +6,10 @@ import re
 import multiprocessing
 import glob
 from tkinter import *
+import os
+import xlsxwriter
+from pyexcel.cookbook import merge_all_to_a_book
+import glob
 
 '''
 startdate = "06/12/2016"
@@ -52,9 +56,14 @@ def main():
     startdate = str(m1 + "/" + d1 + "/" + y1)
     enddate = str(m2 + "/" + d2 + "/" + y2)
 
-    print(" start date is %s and type is %s " % (startdate, type(startdate)))
+    '''
+    startdate = sd.strip()
+    enddate = ed.strip()
+    ticker = tkr.strip().upper()
+
+    print(" start date is " +startdate)
     print("end date is %s and type is %s " % (enddate, type(enddate)))
-    print("ticker is %s and type is %s" % (ticker, type(ticker)))
+    print("ticker is %s and type is %s" % (ticker, type(ticker)))'''
 
     timestamp_startdate = int(time.mktime(datetime.datetime.strptime(startdate, "%m/%d/%Y").timetuple()))
     timestamp_enddate = int(time.mktime(datetime.datetime.strptime(enddate, "%m/%d/%Y").timetuple()))
@@ -87,30 +96,45 @@ def main():
 
     p = multiprocessing.Pool(processes=4)
     p.map(ParsingPage, pool_input_tuple)
-    rd = glob.glob("E:/Graduate Project/finance data/Google Data*.txt")
-    with open("E:/Graduate Project/finance data/Google Data combined.txt", "wb") as outfile:
+
+
+    merge_all_to_a_book(glob.glob("C:/Users/vamshi/Desktop/DATA_EXTRACTION/yahoo/"+str(ticker)+"/*.xlsx"), "C:/Users/vamshi/Desktop/DATA_EXTRACTION/yahoo/"+str(ticker)+"/Yahoo Data combined.xlsx")
+
+
+    rd = glob.glob("C:/Users/vamshi/Desktop/DATA_EXTRACTION/yahoo/"+str(ticker)+"/*.txt")
+    with  open("C:/Users/vamshi/Desktop/DATA_EXTRACTION/yahoo/"+str(ticker)+"/Yahoo Data combined.txt","wb") as outfile:
         for f in rd:
             with open(f, "rb") as infille:
                 outfile.write(infille.read())
 
 
-    file = open("E:/Graduate Project/finance data/Google Data combined.txt")
-    lines = file.readlines()
-    file.close()
+    # file = open("C:/Users/vamshi/Desktop/DATA_EXTRACTION/yahoo/"+str(ticker)+"/Yahoo Data combined.csv")
+    # lines = file.readlines()
+    # print (lines)
+    # file.close()
+    # workbook = xlsxwriter.Workbook(
+    #     'C:/Users/vamshi/Desktop/DATA_EXTRACTION/yahoo/"+str(ticker)+"/Yahoo Data combined.xlsx')
+    # worksheet = workbook.add_worksheet()
+    # workbook.close()
 
-    root = Tk()
-    s = Scrollbar(root)
-    s.pack(side=RIGHT, fill=Y)
-    t = Text(root, height=800, width=1600)
-    t.pack(side=LEFT, fill=Y)
-    s.config(command=t.yview)
-    t.pack(side=TOP)
-    t.insert(END, lines)
-    root.mainloop()
+
+
+    # root = Tk()
+    # root.title("Yahoo Extracted data")
+    # s = Scrollbar(root)
+    # s.pack(side=RIGHT, fill=Y)
+    # t = Text(root, height=800, width=1600)
+    # t.pack(side=LEFT, fill=Y)
+    # s.config(command=t.yview)
+    # t.pack(side=TOP)
+    # t.insert(END, lines)
+    # root.mainloop()
 
 
 
 def ParsingPage(poolinput):
+    k = re.findall("[A-Z]+", poolinput[0][1])
+    print("k is {}",k)
     table_complete=[]
     for i in range(len(poolinput)):
 
@@ -125,17 +149,31 @@ def ParsingPage(poolinput):
         # append into table_complete the values after each iteration.
         table_complete.append(table)
 
-    file = open("E:/Graduate Project/finance data/Yahoo Data" + str(poolinput[i][0]).strip() + ".txt", "w+")
+    if not os.path.exists("C:/Users/vamshi/Desktop/DATA_EXTRACTION/yahoo/" + k[0]):
+        os.makedirs("C:/Users/vamshi/Desktop/DATA_EXTRACTION/yahoo/" + k[0] + "/")
+    workbook  = xlsxwriter.Workbook("C:/Users/vamshi/Desktop/DATA_EXTRACTION/yahoo/" + str(k[0]) + "/" + str(
+        poolinput[i][0]).strip() + ".xlsx")
+    worksheet = workbook.add_worksheet()
+
+    f = open("C:/Users/vamshi/Desktop/DATA_EXTRACTION/yahoo/" + str(k[0]) + "/" + str(poolinput[i][0]).strip()+".txt","w+")
     print("process " + str(poolinput[i][0]) + " done")
+
+    # initializing values to set the cell numbers
+    i = 0
+    j = 0
     for x in table_complete:
         for y in x:
+            f.write(y.text + "\n\n")
             for z in y:
-                #print( z.text.replace(",,","  "))
-                print(z.text, end="\t\t")
-                file.write(z.text+ "\t")
-            file.write("\n")
+                #f.write(y.text + "\n\n")
+                worksheet.write(j, i, z.text)
+                print(z.text, end=",,")
+                #yield (str(z.text + "\n"))
+                i = i + 1
+            i = 0
             print("\n")
-
+            j = j + 1
+    workbook.close()
 
     '''
     # opening the excel sheet to write the data into

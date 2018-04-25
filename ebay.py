@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 import requests
+import os
 import re
 import time
 import multiprocessing
@@ -19,17 +20,18 @@ def main():
         line = line.lower().strip()
         if (re.findall(r'\w+temnumber', line)):
             item_no = re.split('/|-|\|:|=', line)
-
+    #
     '''item number of the product, different items have different items numbers in ebay'''
     '''change the ones that says itm =  "some number" to change the comments displayed'''
     item_number = item_no[-1].strip()
+    # item_number = 272758290709
 
     url1 = "https://www.ebay.com/urw/product-reviews/" + str(item_number) + "?_itm=1000047616"
 
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.71 Safari/537.36'}
     a = requests.get(url1, headers=headers)
-    soup = BeautifulSoup(a.content, "lxml")
+    soup = BeautifulSoup(a.content, "html.parser")
 
     '''to find the page number of the last page, so as to make it possible to loop so many times'''
     page_number = []
@@ -66,8 +68,8 @@ def main():
     p = multiprocessing.Pool(processes=4)
     p.map(ParsingPage, pool_input_tuple)
     print("total time taken in multiprocessing pool is " + str(time.time() - t1))
-    rd = glob.glob("E:/Graduate Project/finance data/Ebay Comments*.txt")
-    with open("E:/Graduate Project/finance data/Ebay Comments combined.txt", "wb") as outfile:
+    rd = glob.glob("C:/Users/vamshi/Desktop/DATA_EXTRACTION/ebay/"+str(item_number)+"/*.txt")
+    with open("C:/Users/vamshi/Desktop/DATA_EXTRACTION/ebay/"+str(item_number)+"/Ebay Comments combined.txt","wb") as outfile:
         for f in rd:
             with open(f, "rb") as infille:
                 outfile.write(infille.read())
@@ -88,14 +90,20 @@ def main():
 
 
 def ParsingPage(pool_input1):
+    k = re.findall("\d+",pool_input1[0][1])
+    print(k)
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.71 Safari/537.36'}
     for i in range(len(pool_input1)):
-        f = open("E:/Graduate Project/finance data/Ebay Comments" + str(pool_input1[i][0]).strip() + ".txt", "w+")
+        if not os.path.exists("C:/Users/vamshi/Desktop/DATA_EXTRACTION/ebay/"+k[0]):
+            os.makedirs("C:/Users/vamshi/Desktop/DATA_EXTRACTION/ebay/"+k[0]+"/")
+        f = open("C:/Users/vamshi/Desktop/DATA_EXTRACTION/ebay/"+k[0]+"/"+ str(pool_input1[i][0]).strip() + ".txt","w+")
+        #f = open("C:/Users/vamshi/Desktop/DATA_EXTRACTION/ebay/" + str(pool_input1[i][0]).strip() + ".txt",  "w+")
         print("url from ParsingPage "+pool_input1[i][1])
         a = requests.get(pool_input1[i][1], headers=headers)
-        soup = BeautifulSoup(a.content, "lxml")
+        soup = BeautifulSoup(a.content, "html.parser")
         table2 = soup.find_all("p", {"itemprop": "reviewBody"})
+        print("process " + str(pool_input1[i][0]) + " done")
         print(pool_input1[i][1])
         for item in table2:
             print(item.text)
@@ -107,3 +115,4 @@ def ParsingPage(pool_input1):
 
 if __name__ == "__main__":
     main()
+
